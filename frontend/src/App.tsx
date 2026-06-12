@@ -29,6 +29,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+
 function AppShell() {
   return (
     <>
@@ -44,15 +45,15 @@ function AppShell() {
         <Routes>
           <Route path="/"              element={<Dashboard />} />
           <Route path="/repositories"  element={<Repositories />} />
-          <Route path="/analyze"       element={<Analyze />} />
           <Route path="/architecture"  element={<Architecture />} />
           <Route path="/impact"        element={<Impact />} />
           <Route path="/security"      element={<Security />} />
           <Route path="/roadmap"       element={<Roadmap />} />
           <Route path="/docs"          element={<Docs />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/settings"      element={<Settings />} />
-          <Route path="/profile"       element={<Profile />} />
+          <Route path="/analyze"       element={<ProtectedRoute><Analyze /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/settings"      element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Routes>
       </main>
 
@@ -90,11 +91,7 @@ export default function App() {
         <Routes>
           <Route path="/login"         element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppShell />
-            </ProtectedRoute>
-          } />
+          <Route path="/*" element={<AppShell />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

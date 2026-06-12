@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { importRepo, listRepos, getRepoAnalyses } from '../api'
+import { useAuth } from '../AuthContext'
 import type { Repository } from '../types'
 
-// Circular health score SVG — matches the design's SVG ring
 function HealthRing({ score }: { score: number }) {
   const r = 20
-  const circ = 2 * Math.PI * r         // 125.6
+  const circ = 2 * Math.PI * r
   const offset = circ * (1 - score / 100)
   const color = score >= 85 ? '#00e475' : score >= 65 ? '#ffb597' : '#ffb4ab'
   return (
@@ -27,7 +27,6 @@ function HealthRing({ score }: { score: number }) {
   )
 }
 
-// Repo icon colors cycling
 const ICON_STYLES = [
   { bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.25)',  color: '#c0c1ff', icon: 'terminal'   },
   { bg: 'rgba(252,109,38,0.12)', border: 'rgba(252,109,38,0.25)',  color: '#ffb597', icon: 'dataset'    },
@@ -59,6 +58,8 @@ function getLang(name: string): string {
 }
 
 export default function Repositories() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [repos, setRepos]         = useState<Repository[]>([])
   const [url, setUrl]             = useState('')
   const [loading, setLoading]     = useState(false)
@@ -68,6 +69,7 @@ export default function Repositories() {
   const [analysisCounts, setAnalysisCounts] = useState<Record<number, number>>({})
 
   useEffect(() => {
+    if (!user) return
     listRepos().then(async (rs: Repository[]) => {
       setRepos(rs)
       const counts: Record<number, number> = {}
@@ -77,20 +79,18 @@ export default function Repositories() {
       }))
       setAnalysisCounts(counts)
     }).catch(() => {})
-  }, [])
+  }, [user])
 
   const handleImport = async () => {
+    if (!user) { navigate('/login'); return }
     if (!url.trim()) return
     setLoading(true); setError('')
     const name = url.trim().split('/').pop() ?? 'repository'
     setImportingName(name)
-
-    // Animate progress
     setImportProgress(0)
     const interval = setInterval(() => {
       setImportProgress(p => Math.min(p + Math.random() * 18, 90))
     }, 400)
-
     try {
       const repo = await importRepo(url.trim())
       clearInterval(interval)
@@ -120,102 +120,110 @@ export default function Repositories() {
 
       {/* ── Hero / Importer ─────────────────────────────────────── */}
       <section className="mb-10">
-        <div className="rounded-xl p-8 relative overflow-hidden group animate-entrance"
-          style={{ background: 'rgba(24,32,46,0.5)', backdropFilter: 'blur(32px)', border: '1px solid rgba(255,255,255,0.08)' }}>
-
-          {/* Ghost icon top-right */}
-          <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity">
-            <span className="material-symbols-outlined" style={{ fontSize: 120, fontVariationSettings: "'FILL' 1" }}>cloud_download</span>
+        {!user ? (
+          <div className="rounded-xl p-10 flex flex-col items-center justify-center gap-4 text-center"
+            style={{ background: 'rgba(24,32,46,0.5)', backdropFilter: 'blur(32px)', border: '1px solid rgba(255,255,255,0.08)', minHeight: 180 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 40, color: '#fc6d26' }}>lock</span>
+            <p className="font-geist font-semibold text-base" style={{ color: '#dbe2f6' }}>Sign in to import repositories</p>
+            <p className="font-mono text-xs" style={{ color: 'rgba(219,226,246,0.45)' }}>You need an account to import and analyse repositories.</p>
+            <Link to="/login"
+              className="mt-2 px-6 py-2.5 rounded-lg font-geist font-bold text-sm"
+              style={{ background: '#fc6d26', color: '#360f00', textDecoration: 'none' }}>
+              Sign In / Sign Up
+            </Link>
           </div>
+        ) : (
+          <div className="rounded-xl p-8 relative overflow-hidden group animate-entrance"
+            style={{ background: 'rgba(24,32,46,0.5)', backdropFilter: 'blur(32px)', border: '1px solid rgba(255,255,255,0.08)' }}>
 
-          <div className="relative z-10">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg" style={{ background: '#fc6d26' }}>
-                <span className="material-symbols-outlined text-white" style={{ fontSize: 20 }}>get_app</span>
-              </div>
-              <h2 className="font-geist font-bold text-2xl" style={{ color: '#dbe2f6' }}>AI Repository Importer</h2>
+            <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity">
+              <span className="material-symbols-outlined" style={{ fontSize: 120, fontVariationSettings: "'FILL' 1" }}>cloud_download</span>
             </div>
 
-            <p className="text-base mb-8 max-w-2xl" style={{ color: 'rgba(219,226,246,0.7)', lineHeight: 1.7 }}>
-              Instantly index your codebase. Orbit Architect will scan your architecture, detect microservices, and map dependency flows automatically.
-            </p>
-
-            {/* Input row */}
-            <div className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-mono uppercase tracking-widest mb-2" style={{ color: '#ffb597' }}>
-                  GitLab Repository URL
-                </label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                    style={{ fontSize: 20, color: '#fc6d26' }}>link</span>
-                  <input
-                    value={url}
-                    onChange={e => setUrl(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleImport()}
-                    placeholder="https://gitlab.com/orbit-org/core-engine"
-                    className="w-full rounded-lg py-3.5 pl-12 pr-4 font-mono text-sm outline-none transition-all"
-                    style={{
-                      background: 'rgba(6,14,28,0.7)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: '#dbe2f6',
-                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)',
-                    }}
-                  />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg" style={{ background: '#fc6d26' }}>
+                  <span className="material-symbols-outlined text-white" style={{ fontSize: 20 }}>get_app</span>
                 </div>
+                <h2 className="font-geist font-bold text-2xl" style={{ color: '#dbe2f6' }}>AI Repository Importer</h2>
               </div>
-              <button onClick={handleImport} disabled={loading || !url.trim()}
-                className="flex items-center gap-2 px-7 py-3.5 rounded-lg font-geist font-bold text-sm transition-all disabled:opacity-40"
-                style={{
-                  background: '#fc6d26', color: '#360f00',
-                  boxShadow: loading ? 'none' : '0 0 20px rgba(252,109,38,0.25)',
-                  transform: 'scale(1)',
-                }}
-                onMouseEnter={e => !loading && ((e.target as HTMLElement).style.boxShadow = '0 0 40px rgba(252,109,38,0.45)')}
-                onMouseLeave={e => !loading && ((e.target as HTMLElement).style.boxShadow = '0 0 20px rgba(252,109,38,0.25)')}>
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>bolt</span>
-                {loading ? 'Importing...' : 'Import Repository'}
-              </button>
-            </div>
 
-            {/* Error */}
-            {error && (
-              <div className="mt-4 flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg"
-                style={{ background: 'rgba(255,180,171,0.08)', color: '#ffb4ab', border: '1px solid rgba(255,180,171,0.2)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>error</span>
-                {error}
+              <p className="text-base mb-8 max-w-2xl" style={{ color: 'rgba(219,226,246,0.7)', lineHeight: 1.7 }}>
+                Instantly index your codebase. Orbit Architect will scan your architecture, detect microservices, and map dependency flows automatically.
+              </p>
+
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-mono uppercase tracking-widest mb-2" style={{ color: '#ffb597' }}>
+                    GitLab Repository URL
+                  </label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+                      style={{ fontSize: 20, color: '#fc6d26' }}>link</span>
+                    <input
+                      value={url}
+                      onChange={e => setUrl(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleImport()}
+                      placeholder="https://gitlab.com/orbit-org/core-engine"
+                      className="w-full rounded-lg py-3.5 pl-12 pr-4 font-mono text-sm outline-none transition-all"
+                      style={{
+                        background: 'rgba(6,14,28,0.7)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: '#dbe2f6',
+                        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)',
+                      }}
+                    />
+                  </div>
+                </div>
+                <button onClick={handleImport} disabled={loading || !url.trim()}
+                  className="flex items-center gap-2 px-7 py-3.5 rounded-lg font-geist font-bold text-sm transition-all disabled:opacity-40"
+                  style={{
+                    background: '#fc6d26', color: '#360f00',
+                    boxShadow: loading ? 'none' : '0 0 20px rgba(252,109,38,0.25)',
+                  }}
+                  onMouseEnter={e => !loading && ((e.target as HTMLElement).style.boxShadow = '0 0 40px rgba(252,109,38,0.45)')}
+                  onMouseLeave={e => !loading && ((e.target as HTMLElement).style.boxShadow = '0 0 20px rgba(252,109,38,0.25)')}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>bolt</span>
+                  {loading ? 'Importing...' : 'Import Repository'}
+                </button>
               </div>
-            )}
 
-            {/* Progress bar */}
-            {loading && importProgress > 0 && (
-              <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined animate-spin" style={{ fontSize: 18, color: '#ffb597' }}>sync</span>
-                    <span className="font-mono text-xs" style={{ color: 'rgba(219,226,246,0.7)' }}>
-                      Analyzing: {importingName}
+              {error && (
+                <div className="mt-4 flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg"
+                  style={{ background: 'rgba(255,180,171,0.08)', color: '#ffb4ab', border: '1px solid rgba(255,180,171,0.2)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>error</span>
+                  {error}
+                </div>
+              )}
+
+              {loading && importProgress > 0 && (
+                <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined animate-spin" style={{ fontSize: 18, color: '#ffb597' }}>sync</span>
+                      <span className="font-mono text-xs" style={{ color: 'rgba(219,226,246,0.7)' }}>
+                        Analyzing: {importingName}
+                      </span>
+                    </div>
+                    <span className="font-mono text-xs" style={{ color: '#ffb597' }}>
+                      {Math.round(importProgress)}% Complete
                     </span>
                   </div>
-                  <span className="font-mono text-xs" style={{ color: '#ffb597' }}>
-                    {Math.round(importProgress)}% Complete
-                  </span>
+                  <div className="h-2 w-full rounded-full overflow-hidden relative"
+                    style={{ background: 'rgba(6,14,28,0.8)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${importProgress}%`,
+                        background: '#fc6d26',
+                        boxShadow: '0 0 15px rgba(252,109,38,0.5)',
+                      }} />
+                    <div className="scanning-line" />
+                  </div>
                 </div>
-                <div className="h-2 w-full rounded-full overflow-hidden relative"
-                  style={{ background: 'rgba(6,14,28,0.8)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${importProgress}%`,
-                      background: '#fc6d26',
-                      boxShadow: '0 0 15px rgba(252,109,38,0.5)',
-                    }} />
-                  <div className="scanning-line" />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* ── Grid header ────────────────────────────────────────── */}
@@ -241,7 +249,7 @@ export default function Repositories() {
       {/* ── Repository Grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {repos.map((repo, i) => {
-          const style    = ICON_STYLES[i % ICON_STYLES.length]
+          const istyle   = ICON_STYLES[i % ICON_STYLES.length]
           const health   = getHealth(analysisCounts[repo.id] ?? 0)
           const status   = getStatus(health)
           const lang     = getLang(repo.name)
@@ -258,24 +266,20 @@ export default function Repositories() {
                 animationDelay: `${i * 0.06}s`,
                 textDecoration: 'none',
               }}>
-              {/* Top row */}
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ background: style.bg, border: `1px solid ${style.border}` }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 22, color: style.color, fontVariationSettings: "'FILL' 1" }}>
-                    {style.icon}
+                  style={{ background: istyle.bg, border: `1px solid ${istyle.border}` }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 22, color: istyle.color, fontVariationSettings: "'FILL' 1" }}>
+                    {istyle.icon}
                   </span>
                 </div>
                 <HealthRing score={health} />
               </div>
 
-              {/* Name */}
-              <h4 className="font-geist font-bold text-base mb-2 truncate transition-colors group-hover:text-orange-300"
-                style={{ color: '#dbe2f6' }}>
+              <h4 className="font-geist font-bold text-base mb-2 truncate" style={{ color: '#dbe2f6' }}>
                 {repo.name}
               </h4>
 
-              {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="px-2 py-0.5 rounded text-xs font-mono"
                   style={{ background: 'rgba(192,193,255,0.1)', color: '#c0c1ff', border: '1px solid rgba(192,193,255,0.2)' }}>
@@ -287,44 +291,40 @@ export default function Repositories() {
                 </span>
               </div>
 
-              {/* Stats */}
               <div className="grid grid-cols-2 gap-3 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div>
                   <span className="block text-xs font-mono uppercase tracking-wider mb-1" style={{ color: 'rgba(219,226,246,0.35)' }}>
                     Analyses
                   </span>
-                  <span className="font-geist font-bold text-sm" style={{ color: '#dbe2f6' }}>
-                    {analyses} Run
-                  </span>
+                  <span className="font-geist font-bold text-sm" style={{ color: '#dbe2f6' }}>{analyses} Run</span>
                 </div>
                 <div>
                   <span className="block text-xs font-mono uppercase tracking-wider mb-1" style={{ color: 'rgba(219,226,246,0.35)' }}>
                     Imported
                   </span>
-                  <span className="font-geist font-bold text-sm" style={{ color: '#dbe2f6' }}>
-                    {relTime}
-                  </span>
+                  <span className="font-geist font-bold text-sm" style={{ color: '#dbe2f6' }}>{relTime}</span>
                 </div>
               </div>
             </Link>
           )
         })}
 
-        {/* Add new placeholder card */}
-        <Link to="/repositories"
-          className="repo-card flex flex-col items-center justify-center rounded-xl p-5 cursor-pointer animate-entrance group"
-          style={{
-            minHeight: 220,
-            background: 'transparent',
-            border: '2px dashed rgba(255,255,255,0.1)',
-            animationDelay: `${repos.length * 0.06}s`,
-            textDecoration: 'none',
-          }}
-          onClick={e => { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder*="gitlab"]')?.focus() }}>
-          <span className="material-symbols-outlined mb-3 transition-colors"
-            style={{ fontSize: 48, color: 'rgba(219,226,246,0.2)' }}>add_circle</span>
-          <p className="font-mono text-xs" style={{ color: 'rgba(219,226,246,0.35)' }}>New Repo Source</p>
-        </Link>
+        {user && (
+          <Link to="/repositories"
+            className="repo-card flex flex-col items-center justify-center rounded-xl p-5 cursor-pointer animate-entrance group"
+            style={{
+              minHeight: 220,
+              background: 'transparent',
+              border: '2px dashed rgba(255,255,255,0.1)',
+              animationDelay: `${repos.length * 0.06}s`,
+              textDecoration: 'none',
+            }}
+            onClick={e => { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder*="gitlab"]')?.focus() }}>
+            <span className="material-symbols-outlined mb-3 transition-colors"
+              style={{ fontSize: 48, color: 'rgba(219,226,246,0.2)' }}>add_circle</span>
+            <p className="font-mono text-xs" style={{ color: 'rgba(219,226,246,0.35)' }}>New Repo Source</p>
+          </Link>
+        )}
       </div>
     </div>
   )
