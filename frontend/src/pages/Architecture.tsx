@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { listRepos, getRepoAnalyses } from '../api'
 import type { Repository, Analysis } from '../types'
 
