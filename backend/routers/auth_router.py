@@ -110,7 +110,7 @@ def gitlab_login():
         f"?client_id={settings.GITLAB_CLIENT_ID}"
         f"&redirect_uri={settings.BACKEND_URL}/auth/gitlab/callback"
         "&response_type=code"
-        "&scope=read_user+profile+email"
+        "&scope=openid+profile+email"
     )
 
 
