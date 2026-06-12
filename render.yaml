@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: orbit-architect-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./orbit_architect.db
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GITLAB_TOKEN
+        sync: false
+      - key: GITLAB_URL
+        value: https://gitlab.com
+      - key: CORS_ORIGINS
+        sync: false
+    plan: free
