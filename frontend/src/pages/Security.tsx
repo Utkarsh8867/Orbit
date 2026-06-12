@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listRepos, getRepoAnalyses, createIssues } from '../api'
-import type { Repository, Analysis, Security } from '../types'
+import type { Repository, Analysis } from '../types'
 
 export default function SecurityPage() {
   const [repos, setRepos]       = useState<Repository[]>([])

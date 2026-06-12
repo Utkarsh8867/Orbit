@@ -2,9 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { listRepos, getRepoAnalyses } from '../api'
 import type { Repository, Analysis } from '../types'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface NodePos { x: number; y: number }
-
 const NODE_COLORS = ['#ffb597', '#c0c1ff', '#00e475', '#fc6d26', '#93c5fd', '#fda4af']
 const NODE_ICONS  = ['hub', 'lock', 'database', 'monitoring', 'api', 'schema', 'layers', 'terminal']
 
@@ -35,8 +32,6 @@ export default function ArchitecturePage() {
   const [pan, setPan]           = useState({ x: 0, y: 0 })
   const [activeNode, setActiveNode] = useState<string | null>(null)
   const [time, setTime] = useState(new Date())
-  const svgRef = useRef<SVGSVGElement>(null)
-
   useEffect(() => { listRepos().then(setRepos).catch(() => {}) }, [])
   useEffect(() => {
     if (repoId) getRepoAnalyses(Number(repoId))
