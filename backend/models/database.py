@@ -4,11 +4,25 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 from config import settings
 
-engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+# SQLite needs check_same_thread=False, PostgreSQL does not need it
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False} if is_sqlite else {},
+    pool_pre_ping=True,  # reconnect if connection dropped (important for Postgres)
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# SQLite has no native JSON column — store as TEXT and serialize automatically
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# JSONText works for both SQLite (stores as TEXT) and PostgreSQL (stores as TEXT)
 class JSONText(TypeDecorator):
     impl = Text
     cache_ok = True
@@ -19,12 +33,6 @@ class JSONText(TypeDecorator):
     def process_result_value(self, value, dialect):
         return json.loads(value) if value is not None else None
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 class Repository(Base):
     __tablename__ = "repositories"
@@ -32,8 +40,9 @@ class Repository(Base):
     gitlab_url = Column(String, unique=True, index=True)
     name = Column(String)
     description = Column(Text, nullable=True)
-    structure = Column(JSONText, nullable=True)  # parsed repo tree
+    structure = Column(JSONText, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 class Analysis(Base):
     __tablename__ = "analyses"
@@ -47,6 +56,7 @@ class Analysis(Base):
     roadmap = Column(JSONText, nullable=True)
     gitlab_issues = Column(JSONText, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)
