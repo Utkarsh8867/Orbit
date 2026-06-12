@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom'
+
 export default function Topbar() {
+  const navigate = useNavigate()
   return (
     <header className="fixed top-0 right-0 z-40 flex justify-between items-center h-20 px-8"
       style={{
@@ -35,14 +38,14 @@ export default function Topbar() {
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2.5 rounded-lg transition-all hover:border-[rgba(255,181,151,0.3)]"
+        <button onClick={() => navigate('/notifications')} className="relative p-2.5 rounded-lg transition-all hover:border-[rgba(255,181,151,0.3)]"
           style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.04)' }}>
           <span className="material-symbols-outlined" style={{ fontSize: 20, color: 'rgba(255,255,255,0.55)' }}>notifications</span>
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: '#fc6d26', border: '2px solid #060e1c' }} />
         </button>
 
         {/* Settings */}
-        <button className="p-2.5 rounded-lg transition-all hover:border-[rgba(255,181,151,0.3)]"
+        <button onClick={() => navigate('/settings')} className="p-2.5 rounded-lg transition-all hover:border-[rgba(255,181,151,0.3)]"
           style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.55)' }}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>tune</span>
         </button>

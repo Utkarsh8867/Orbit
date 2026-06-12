@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom'
 
 const links = [
-  { to: '/',             icon: 'dashboard',      label: 'Command Center' },
-  { to: '/repositories', icon: 'folder_special',  label: 'Repositories'   },
-  { to: '/analyze',      icon: 'query_stats',    label: 'Analyses'       },
-  { to: '/architecture', icon: 'account_tree',   label: 'Blueprint'      },
-  { to: '/impact',       icon: 'analytics',      label: 'Impact'         },
-  { to: '/security',     icon: 'shield_lock',    label: 'Security Mesh'  },
-  { to: '/roadmap',      icon: 'timeline',       label: 'Roadmap'        },
+  { to: '/',               icon: 'dashboard',      label: 'Command Center' },
+  { to: '/repositories',   icon: 'folder_special',  label: 'Repositories'   },
+  { to: '/analyze',        icon: 'query_stats',    label: 'Analyses'       },
+  { to: '/architecture',   icon: 'account_tree',   label: 'Blueprint'      },
+  { to: '/impact',         icon: 'analytics',      label: 'Impact'         },
+  { to: '/security',       icon: 'shield_lock',    label: 'Security Mesh'  },
+  { to: '/roadmap',        icon: 'timeline',       label: 'Roadmap'        },
+  { to: '/docs',           icon: 'menu_book',      label: 'Docs'           },
 ]
 
 export default function Sidebar() {

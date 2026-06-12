@@ -1,7 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './AuthContext'
+import type { ReactNode } from 'react'
 import ShaderBackground from './components/ShaderBackground'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
+import Login from './pages/Login'
+import AuthCallback from './pages/AuthCallback'
 import Dashboard from './pages/Dashboard'
 import Repositories from './pages/Repositories'
 import Analyze from './pages/Analyze'
@@ -9,12 +13,26 @@ import Architecture from './pages/Architecture'
 import Impact from './pages/Impact'
 import Security from './pages/Security'
 import Roadmap from './pages/Roadmap'
+import Docs from './pages/Docs'
+import Notifications from './pages/Notifications'
+import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 
-export default function App() {
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#060e1c' }}>
+      <div className="w-10 h-10 border-2 rounded-full animate-spin"
+        style={{ borderColor: 'rgba(255,181,151,0.2)', borderTopColor: '#ffb597' }} />
+    </div>
+  )
+  return user ? <>{children}</> : <Navigate to="/login" replace />
+}
+
+function AppShell() {
   return (
-    <BrowserRouter>
+    <>
       <ShaderBackground />
-      {/* Mesh gradient overlay */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60" style={{
         background: `radial-gradient(circle at 0% 0%, rgba(252,109,38,0.15) 0%, transparent 50%),
                      radial-gradient(circle at 100% 100%, rgba(49,49,192,0.15) 0%, transparent 50%),
@@ -24,13 +42,17 @@ export default function App() {
       <Topbar />
       <main style={{ marginLeft: '18rem', paddingTop: '5rem', minHeight: '100vh', position: 'relative', zIndex: 10 }}>
         <Routes>
-          <Route path="/"             element={<Dashboard />} />
-          <Route path="/repositories" element={<Repositories />} />
-          <Route path="/analyze"      element={<Analyze />} />
-          <Route path="/architecture" element={<Architecture />} />
-          <Route path="/impact"       element={<Impact />} />
-          <Route path="/security"     element={<Security />} />
-          <Route path="/roadmap"      element={<Roadmap />} />
+          <Route path="/"              element={<Dashboard />} />
+          <Route path="/repositories"  element={<Repositories />} />
+          <Route path="/analyze"       element={<Analyze />} />
+          <Route path="/architecture"  element={<Architecture />} />
+          <Route path="/impact"        element={<Impact />} />
+          <Route path="/security"      element={<Security />} />
+          <Route path="/roadmap"       element={<Roadmap />} />
+          <Route path="/docs"          element={<Docs />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings"      element={<Settings />} />
+          <Route path="/profile"       element={<Profile />} />
         </Routes>
       </main>
 
@@ -57,6 +79,24 @@ export default function App() {
             style={{ background: 'rgba(255,181,151,0.1)', border: '1px solid rgba(255,181,151,0.2)', color: '#ffb597', fontSize: 10 }}>/</div>
         </button>
       </div>
-    </BrowserRouter>
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login"         element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

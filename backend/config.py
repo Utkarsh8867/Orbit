@@ -6,6 +6,16 @@ class Settings(BaseSettings):
     GITLAB_TOKEN: str
     GITLAB_URL: str = "https://gitlab.com"
     CORS_ORIGINS: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_URL: str = "http://localhost:8000"
+    SECRET_KEY: str = "change-me-in-production"
+    # OAuth
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
+    GITLAB_CLIENT_ID: str = ""
+    GITLAB_CLIENT_SECRET: str = ""
 
     class Config:
         env_file = ".env"
