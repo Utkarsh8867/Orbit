@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr
 from models.database import get_db, User
 from auth import create_access_token, get_current_user
 from config import settings
-from email_service import send_reset_email
+from email_service import send_otp_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,6 +26,10 @@ class LoginBody(BaseModel):
 
 class ForgotBody(BaseModel):
     email: EmailStr
+
+class VerifyOTPBody(BaseModel):
+    email: EmailStr
+    otp: str
 
 class ResetBody(BaseModel):
     token: str
@@ -59,13 +63,33 @@ def login(body: LoginBody, db: Session = Depends(get_db)):
 def forgot_password(body: ForgotBody, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email, User.provider == "email").first()
     if user:
-        token = secrets.token_urlsafe(32)
-        user.reset_token = token
-        user.reset_token_exp = datetime.utcnow() + timedelta(hours=1)
+        otp = str(secrets.randbelow(900000) + 100000)  # 6-digit OTP
+        hashed_otp = bcrypt.hashpw(otp.encode(), bcrypt.gensalt()).decode()
+        user.reset_token = hashed_otp
+        user.reset_token_exp = datetime.utcnow() + timedelta(minutes=10)
         db.commit()
-        reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
-        send_reset_email(user.email, reset_url, user.name)
-    return {"message": "If that email exists, a reset link has been sent"}
+        try:
+            send_otp_email(user.email, otp, user.name)
+        except Exception as e:
+            raise HTTPException(500, f"Failed to send OTP email: {str(e)}")
+    return {"message": "If that email exists, an OTP has been sent"}
+
+
+@router.post("/verify-otp")
+def verify_otp(body: VerifyOTPBody, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email, User.provider == "email").first()
+    if not user or not user.reset_token or not user.reset_token_exp:
+        raise HTTPException(400, "Invalid or expired OTP")
+    if user.reset_token_exp < datetime.utcnow():
+        raise HTTPException(400, "OTP has expired. Please request a new one")
+    if not bcrypt.checkpw(body.otp.encode(), user.reset_token.encode()):
+        raise HTTPException(400, "Invalid OTP")
+    # OTP valid — issue a short-lived reset token
+    reset_token = secrets.token_urlsafe(32)
+    user.reset_token = reset_token
+    user.reset_token_exp = datetime.utcnow() + timedelta(minutes=15)
+    db.commit()
+    return {"reset_token": reset_token}
 
 
 @router.post("/reset-password")
