@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-in-production"
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "onboarding@resend.dev"
+    RESEND_DOMAIN_VERIFIED: str = "false"  # set to 'true' after verifying domain on resend.com
     # OAuth
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""

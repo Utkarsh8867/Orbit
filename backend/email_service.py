@@ -5,9 +5,12 @@ resend.api_key = settings.RESEND_API_KEY
 
 
 def send_otp_email(to_email: str, otp: str, name: str) -> None:
+    # Resend sandbox: can only send to verified email
+    # Once domain is verified, remove this override
+    actual_to = to_email if settings.RESEND_DOMAIN_VERIFIED == "true" else "kaduutkarsh52@gmail.com"
     resend.Emails.send({
         "from": settings.EMAIL_FROM,
-        "to": to_email,
+        "to": actual_to,
         "subject": "Your Orbit Architect password reset OTP",
         "html": f"""
         <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#060e1c;color:#dbe2f6;padding:40px;border-radius:16px;border:1px solid rgba(255,255,255,0.08)">
