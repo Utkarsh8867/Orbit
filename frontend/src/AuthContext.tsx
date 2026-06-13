@@ -19,7 +19,7 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx>({ user: null, token: null, loading: true, logout: () => {}, setToken: () => {} })
 
-const API = import.meta.env.VITE_API_URL ?? '/api'
+const API = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('orbit_token'))
@@ -38,6 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setToken = (t: string) => {
     localStorage.setItem('orbit_token', t)
     setTokenState(t)
+    // fetch user immediately so ProtectedRoute doesn't redirect
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(setUser)
+      .catch(() => { localStorage.removeItem('orbit_token'); setTokenState(null) })
   }
 
   const logout = () => {

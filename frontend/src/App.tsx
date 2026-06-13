@@ -29,7 +29,8 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
         style={{ borderColor: 'rgba(255,181,151,0.2)', borderTopColor: '#ffb597' }} />
     </div>
   )
-  return user ? <>{children}</> : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  return <>{children}</>
 }
 
 

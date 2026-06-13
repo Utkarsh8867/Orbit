@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
 export default function AuthCallback() {
-  const { setToken } = useAuth()
+  const { setToken, user, loading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -11,11 +11,16 @@ export default function AuthCallback() {
     const token = params.get('token')
     if (token) {
       setToken(token)
-      navigate('/', { replace: true })
     } else {
       navigate('/login', { replace: true })
     }
-  }, [navigate, setToken])
+  }, [])
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/', { replace: true })
+    }
+  }, [user, loading])
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#060e1c' }}>
