@@ -15,7 +15,7 @@ export default function AuthCallback() {
     } else {
       navigate('/login', { replace: true })
     }
-  }, [])
+  }, [navigate, setToken])
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#060e1c' }}>

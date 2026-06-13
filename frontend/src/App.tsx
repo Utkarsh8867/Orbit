@@ -6,6 +6,9 @@ import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
+import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Repositories from './pages/Repositories'
 import Analyze from './pages/Analyze'
@@ -43,14 +46,14 @@ function AppShell() {
       <Topbar />
       <main style={{ marginLeft: '18rem', paddingTop: '5rem', minHeight: '100vh', position: 'relative', zIndex: 10 }}>
         <Routes>
-          <Route path="/"              element={<Dashboard />} />
-          <Route path="/repositories"  element={<Repositories />} />
-          <Route path="/architecture"  element={<Architecture />} />
-          <Route path="/impact"        element={<Impact />} />
-          <Route path="/security"      element={<Security />} />
-          <Route path="/roadmap"       element={<Roadmap />} />
-          <Route path="/docs"          element={<Docs />} />
+          <Route path="/"              element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/repositories"  element={<ProtectedRoute><Repositories /></ProtectedRoute>} />
           <Route path="/analyze"       element={<ProtectedRoute><Analyze /></ProtectedRoute>} />
+          <Route path="/architecture"  element={<ProtectedRoute><Architecture /></ProtectedRoute>} />
+          <Route path="/impact"        element={<ProtectedRoute><Impact /></ProtectedRoute>} />
+          <Route path="/security"      element={<ProtectedRoute><Security /></ProtectedRoute>} />
+          <Route path="/roadmap"       element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+          <Route path="/docs"          element={<ProtectedRoute><Docs /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/settings"      element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -89,8 +92,11 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"         element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/login"              element={<Login />} />
+          <Route path="/auth/callback"      element={<AuthCallback />} />
+          <Route path="/auth/signup"        element={<Signup />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/reset-password"  element={<ResetPassword />} />
           <Route path="/*" element={<AppShell />} />
         </Routes>
       </BrowserRouter>

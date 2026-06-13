@@ -56,8 +56,11 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     avatar_url = Column(String, nullable=True)
-    provider = Column(String, nullable=False)          # google | github | gitlab
+    provider = Column(String, nullable=False)          # google | github | gitlab | email
     provider_id = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)      # only for email provider
+    reset_token = Column(String, nullable=True)
+    reset_token_exp = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
