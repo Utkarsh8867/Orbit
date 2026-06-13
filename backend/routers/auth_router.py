@@ -58,17 +58,13 @@ def login(body: LoginBody, db: Session = Depends(get_db)):
 @router.post("/forgot-password")
 def forgot_password(body: ForgotBody, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email, User.provider == "email").first()
-    # Always return 200 to prevent email enumeration
     if user:
         token = secrets.token_urlsafe(32)
         user.reset_token = token
         user.reset_token_exp = datetime.utcnow() + timedelta(hours=1)
         db.commit()
         reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
-        try:
-            send_reset_email(user.email, reset_url, user.name)
-        except Exception:
-            pass
+        send_reset_email(user.email, reset_url, user.name)
     return {"message": "If that email exists, a reset link has been sent"}
 
 
@@ -81,6 +77,7 @@ def reset_password(body: ResetBody, db: Session = Depends(get_db)):
     user.reset_token = None
     user.reset_token_exp = None
     db.commit()
+    db.refresh(user)
     return {"token": create_access_token(user.id)}
 
 

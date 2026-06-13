@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
 const API = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
@@ -7,7 +7,8 @@ const API = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
 export default function ResetPasswordPage() {
   const { setToken } = useAuth()
   const navigate = useNavigate()
-  const token = new URLSearchParams(window.location.search).get('token') ?? ''
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') ?? ''
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
