@@ -22,8 +22,9 @@ import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth()
-  if (loading) return (
+  const { user, loading, token } = useAuth()
+  // Still loading — show spinner, never redirect yet
+  if (loading || (token && !user)) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#060e1c' }}>
       <div className="w-10 h-10 border-2 rounded-full animate-spin"
         style={{ borderColor: 'rgba(255,181,151,0.2)', borderTopColor: '#ffb597' }} />
