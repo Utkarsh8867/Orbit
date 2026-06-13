@@ -91,7 +91,4 @@ class Analysis(Base):
 
 
 def init_db():
-    # Drop and recreate all tables to apply schema changes
-    # Safe on fresh deployments; existing data will be lost
-    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)

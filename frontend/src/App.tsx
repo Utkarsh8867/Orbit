@@ -8,7 +8,6 @@ import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Repositories from './pages/Repositories'
 import Analyze from './pages/Analyze'
@@ -98,7 +97,6 @@ export default function App() {
           <Route path="/auth/callback"      element={<AuthCallback />} />
           <Route path="/auth/signup"        element={<Signup />} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-          <Route path="/auth/reset-password"  element={<ResetPassword />} />
           <Route path="/*" element={<AppShell />} />
         </Routes>
       </BrowserRouter>
